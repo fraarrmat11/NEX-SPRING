@@ -16,4 +16,5 @@ public class UsuarioDto {
     private Integer monedas;
     private NivelDto nivel;
     private LocalDateTime fechaCreacion;
+    private Integer xpSiguienteNivel;
 }

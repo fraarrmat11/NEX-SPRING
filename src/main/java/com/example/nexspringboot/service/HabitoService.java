@@ -86,19 +86,19 @@ public class HabitoService {
                 Usuario u = h.getUsuario();
                 u.setExperienciaActual(u.getExperienciaActual() + h.getExperienciaXCompletar());
 
-                Nivel nivelActual = u.getNivel();
-
-                Nivel siguienteNivel = nivelRepository
-                        .findFirstByExperienciaNecesariaGreaterThanOrderByExperienciaNecesariaAsc(u.getExperienciaActual())
-                        .orElse(null);
-
-                // SUBIR NIVEL -> sumar monedas de recompensa
-                if (siguienteNivel != null && !siguienteNivel.getId().equals(nivelActual.getId())) {
-                    u.setNivel(siguienteNivel);
-                    u.setMonedas(u.getMonedas() + siguienteNivel.getRecompensaMonedas()); // ← nuevo
-                }
+                // Buscar el nivel correcto para la XP actual
+                nivelRepository.findAll().stream()
+                        .filter(n -> n.getExperienciaNecesaria() <= u.getExperienciaActual())
+                        .max(java.util.Comparator.comparingInt(Nivel::getExperienciaNecesaria))
+                        .ifPresent(nivelCorrecto -> {
+                            if (!nivelCorrecto.getId().equals(u.getNivel().getId())) {
+                                u.setNivel(nivelCorrecto);
+                                u.setMonedas(u.getMonedas() + nivelCorrecto.getRecompensaMonedas());
+                            }
+                        });
             }
         }
+
         logroService.comprobarLogros(h.getUsuario(), habitoRepository.findByUsuario(h.getUsuario()));
         return toDto(habitoRepository.save(h));
     }

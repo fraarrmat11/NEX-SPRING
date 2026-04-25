@@ -6,6 +6,7 @@ import com.example.nexspringboot.model.Nivel;
 import com.example.nexspringboot.model.Usuario;
 import com.example.nexspringboot.repository.NivelRepository;
 import com.example.nexspringboot.repository.UsuarioRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,13 +30,20 @@ public class UsuarioService {
     }
 
     private UsuarioDto toDto(Usuario u) {
+        Integer xpSiguienteNivel = nivelRepository
+                .findFirstByExperienciaNecesariaGreaterThanOrderByExperienciaNecesariaAsc(
+                        u.getNivel() != null ? u.getNivel().getExperienciaNecesaria() : 0)
+                .map(Nivel::getExperienciaNecesaria)
+                .orElse(null); // null = nivel máximo
+
         return new UsuarioDto(
                 u.getId(),
                 u.getNombre(),
                 u.getExperienciaActual(),
                 u.getMonedas(),
                 u.getNivel() != null ? toNivelDto(u.getNivel()) : null,
-                u.getFechaCreacion()
+                u.getFechaCreacion(),
+                xpSiguienteNivel
         );
     }
 
@@ -44,7 +52,9 @@ public class UsuarioService {
     }
 
     public UsuarioDto getById(Integer id) {
-        return toDto(usuarioRepository.findById(id).orElseThrow());
+        return usuarioRepository.findById(id)
+                .map(this::toDto)
+                .orElse(null);
     }
 
     public UsuarioDto crearUsuario(Usuario usuario) {
@@ -67,16 +77,18 @@ public class UsuarioService {
         usuarioRepository.findById(usuarioId).ifPresent(usuario -> {
             usuario.setExperienciaActual(usuario.getExperienciaActual() + experiencia);
 
-            // Comprobar si sube de nivel
-            Nivel nivelActual = usuario.getNivel();
-            Nivel siguienteNivel = nivelRepository
-                    .findFirstByExperienciaNecesariaGreaterThanOrderByExperienciaNecesariaAsc(usuario.getExperienciaActual())
-                    .orElse(null);
-
-            if (siguienteNivel != null && !siguienteNivel.getId().equals(nivelActual.getId())) {
-                usuario.setNivel(siguienteNivel);
-                usuario.setMonedas(usuario.getMonedas() + siguienteNivel.getRecompensaMonedas());
-            }
+            // Buscar el nivel correcto para la XP actual
+            // El nivel correcto es el último cuya experienciaNecesaria <= xpActual
+            nivelRepository.findAll().stream()
+                    .filter(n -> n.getExperienciaNecesaria() <= usuario.getExperienciaActual())
+                    .max(java.util.Comparator.comparingInt(Nivel::getExperienciaNecesaria))
+                    .ifPresent(nivelCorrecto -> {
+                        Nivel nivelActual = usuario.getNivel();
+                        if (!nivelCorrecto.getId().equals(nivelActual.getId())) {
+                            usuario.setNivel(nivelCorrecto);
+                            usuario.setMonedas(usuario.getMonedas() + nivelCorrecto.getRecompensaMonedas());
+                        }
+                    });
 
             usuarioRepository.save(usuario);
         });

@@ -20,6 +20,11 @@ public class UsuarioController {
     @GetMapping
     public List<UsuarioDto> getAll() { return usuarioService.getAll(); }
 
+    @GetMapping("/buscar")
+    public UsuarioDto buscarOCrearPorNombre(@RequestParam String nombre) {
+        return usuarioService.buscarOCrearPorNombre(nombre);
+    }
+
     @GetMapping("/{id}")
     public UsuarioDto getById(@PathVariable Integer id) { return usuarioService.getById(id); }
 
@@ -38,8 +43,5 @@ public class UsuarioController {
         usuarioService.agregarExperiencia(id, cantidad);
     }
 
-    @GetMapping("/buscar")
-    public UsuarioDto buscarOCrearPorNombre(@RequestParam String nombre) {
-        return usuarioService.buscarOCrearPorNombre(nombre);
-    }
+
 }
