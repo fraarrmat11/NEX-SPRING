@@ -19,10 +19,12 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final NivelRepository nivelRepository;
+    private final LogroService logroService;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, NivelRepository nivelRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, NivelRepository nivelRepository, LogroService logroService) {
         this.usuarioRepository = usuarioRepository;
         this.nivelRepository = nivelRepository;
+        this.logroService = logroService;
     }
 
     private NivelDto toNivelDto(Nivel n) {
@@ -87,6 +89,7 @@ public class UsuarioService {
                         if (!nivelCorrecto.getId().equals(nivelActual.getId())) {
                             usuario.setNivel(nivelCorrecto);
                             usuario.setMonedas(usuario.getMonedas() + nivelCorrecto.getRecompensaMonedas());
+                            logroService.comprobarLogrosNivel(usuario);
                         }
                     });
 
@@ -106,5 +109,29 @@ public class UsuarioService {
         nuevo.setExperienciaActual(0);
         nuevo.setMonedas(0);
         return toDto(usuarioRepository.save(nuevo));
+    }
+
+    public void completarFocus(Integer usuarioId, int minutos) {
+        usuarioRepository.findById(usuarioId).ifPresent(usuario -> {
+            // Sumar XP
+            usuario.setExperienciaActual(usuario.getExperienciaActual() + minutos);
+
+            // Comprobar subida de nivel
+            nivelRepository.findAll().stream()
+                    .filter(n -> n.getExperienciaNecesaria() <= usuario.getExperienciaActual())
+                    .max(java.util.Comparator.comparingInt(Nivel::getExperienciaNecesaria))
+                    .ifPresent(nivelCorrecto -> {
+                        if (!nivelCorrecto.getId().equals(usuario.getNivel().getId())) {
+                            usuario.setNivel(nivelCorrecto);
+                            usuario.setMonedas(usuario.getMonedas() + nivelCorrecto.getRecompensaMonedas());
+                        }
+                    });
+
+            // Comprobar logros de nivel y focus
+            logroService.comprobarLogrosNivel(usuario);
+            logroService.comprobarLogrosFocus(usuario, minutos);
+
+            usuarioRepository.save(usuario);
+        });
     }
 }

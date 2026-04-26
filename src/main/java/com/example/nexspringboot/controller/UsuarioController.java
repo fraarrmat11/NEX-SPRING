@@ -37,11 +37,13 @@ public class UsuarioController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id) { usuarioService.delete(id); }
 
-    // ← nuevo
     @PutMapping("/{id}/experiencia")
     public void agregarExperiencia(@PathVariable Integer id, @RequestParam int cantidad) {
         usuarioService.agregarExperiencia(id, cantidad);
     }
 
-
+    @PutMapping("/{id}/focus")
+    public void completarFocus(@PathVariable Integer id, @RequestParam int minutos) {
+        usuarioService.completarFocus(id, minutos);
+    }
 }

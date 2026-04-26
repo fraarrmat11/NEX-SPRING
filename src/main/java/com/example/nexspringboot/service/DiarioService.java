@@ -17,10 +17,12 @@ public class DiarioService {
 
     private final DiarioRepository repo;
     private final UsuarioRepository usuarioRepository;
+    private final LogroService logroService;
 
-    public DiarioService(DiarioRepository repo, UsuarioRepository usuarioRepository) {
+    public DiarioService(DiarioRepository repo, UsuarioRepository usuarioRepository, LogroService logroService) {
         this.repo = repo;
         this.usuarioRepository = usuarioRepository;
+        this.logroService = logroService;
     }
 
     private DiarioDto toDto(Diario d) {
@@ -50,7 +52,9 @@ public class DiarioService {
     public DiarioDto create(DiarioRequest request) {
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId()).orElseThrow();
         Diario diario = new Diario(usuario, request.getFecha(), request.getContenido());
-        return toDto(repo.save(diario));
+        DiarioDto resultado = toDto(repo.save(diario));
+        logroService.comprobarLogrosDiario(usuario);
+        return resultado;
     }
 
     public DiarioDto update(Integer id, DiarioRequest request) {
