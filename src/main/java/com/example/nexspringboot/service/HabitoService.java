@@ -51,13 +51,14 @@ public class HabitoService {
         return toDto(habitoRepository.findById(id).orElseThrow());
     }
 
+    //recoge los habitos del usuario por su id para mostrarlos en la aplicación
     public List<HabitoDto> getByUsuario(Integer usuarioId) {
         return habitoRepository.findAll().stream()
                 .filter(h -> h.getUsuario() != null && h.getUsuario().getId().equals(usuarioId))
                 .map(this::toDto)
                 .toList();
     }
-
+    //crea un habito a partir de unos datos simplificados
     public HabitoDto create(HabitoRequest request) {
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId()).orElseThrow();
         Habito habito = new Habito();
@@ -67,7 +68,7 @@ public class HabitoService {
         habito.setExperienciaXCompletar(request.getExperienciaXCompletar());
         return toDto(habitoRepository.save(habito));
     }
-
+    //actualiza los datos de un habito a partir del id del habito y los datos de request
     public HabitoDto update(Integer id, HabitoRequest request) {
         Habito habito = habitoRepository.findById(id).orElseThrow();
         habito.setNombre(request.getNombre());
@@ -75,46 +76,52 @@ public class HabitoService {
         habito.setExperienciaXCompletar(request.getExperienciaXCompletar());
         return toDto(habitoRepository.save(habito));
     }
-
+    //incrementar contador de habitos, comprueba si se completa, se sube de nivel, etc
     public HabitoDto incrementar(Integer id) {
         Habito h = habitoRepository.findById(id).orElseThrow();
-
+        //no sobrepasa objetivo
         if (h.getProgresoActual() < h.getObjetivo()) {
             h.setProgresoActual(h.getProgresoActual() + 1);
-
+            //si se llega al objetivo suma experiencia al usuario
             if (h.getProgresoActual().equals(h.getObjetivo())) {
                 Usuario u = h.getUsuario();
                 u.setExperienciaActual(u.getExperienciaActual() + h.getExperienciaXCompletar());
-
-                // Buscar el nivel correcto para la XP actual
+                // Busca el nivel más alto alcanzable según la XP actual (ayuda de ia)
                 nivelRepository.findAll().stream()
                         .filter(n -> n.getExperienciaNecesaria() <= u.getExperienciaActual())
+
+                        // Se queda con el nivel válido con mayor requisito de experiencia
                         .max(java.util.Comparator.comparingInt(Nivel::getExperienciaNecesaria))
+
                         .ifPresent(nivelCorrecto -> {
+                            // Solo actualiza si realmente cambia de nivel
                             if (!nivelCorrecto.getId().equals(u.getNivel().getId())) {
                                 u.setNivel(nivelCorrecto);
+
+                                // Aplica recompensa al subir de nivel
                                 u.setMonedas(u.getMonedas() + nivelCorrecto.getRecompensaMonedas());
                             }
                         });
             }
         }
-
+        //comprueba si al incrementar el hábito se ha completado algún logro
         logroService.comprobarLogros(h.getUsuario(), habitoRepository.findByUsuario(h.getUsuario()));
         return toDto(habitoRepository.save(h));
     }
 
     public HabitoDto decrementar(Integer id) {
         Habito h = habitoRepository.findById(id).orElseThrow();
-
+        //no baja de 0
         if (h.getProgresoActual() > 0) {
             boolean estabaCompleto = h.getProgresoActual().equals(h.getObjetivo());
             h.setProgresoActual(h.getProgresoActual() - 1);
-
+            //si estaba completo, resta al usuario la experiencia
             if (estabaCompleto) {
                 Usuario u = h.getUsuario();
                 u.setExperienciaActual(u.getExperienciaActual() - h.getExperienciaXCompletar());
-
+                //si el usuario tiene experiencia negativa y es mayor de nivel 1
                 if (u.getExperienciaActual() < 0 && u.getNivel().getId() > 1) {
+                    //coge el nivel anterior del usuario y se lo asigna
                     Nivel nivelAnterior = nivelRepository.findById(u.getNivel().getId() - 1).orElse(null);
                     if (nivelAnterior != null) {
                         u.setNivel(nivelAnterior);
@@ -126,7 +133,7 @@ public class HabitoService {
 
         return toDto(habitoRepository.save(h));
     }
-
+    //resetea los hábitos a las 00:00
     @Scheduled(cron = "0 0 0 * * *")
     public void resetHabitos() {
         List<Habito> habitos = habitoRepository.findAll();

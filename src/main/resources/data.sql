@@ -1,5 +1,5 @@
 -- Niveles
-INSERT INTO nivel (id, experiencia_necesaria, nombre, recompensa_monedas) VALUES
+INSERT IGNORE INTO nivel (id, experiencia_necesaria, nombre, recompensa_monedas) VALUES
 (1, 0, 'pringao', 0),
 (2, 500, 'panoli', 50),
 (3, 1000, 'paquete', 100),
@@ -22,7 +22,7 @@ INSERT INTO nivel (id, experiencia_necesaria, nombre, recompensa_monedas) VALUES
 (20, 60000, 'dios absoluto del autocontrol', 6000);
 
 -- Skins
-INSERT INTO skin_tienda (id, imagen_url, nombre, precio) VALUES
+INSERT IGNORE INTO skin_tienda (id, imagen_url, nombre, precio) VALUES
 (1, 'skin_default', 'Por defecto', 0),
 (2, 'skin_carton', 'Cartón', 100),
 (3, 'skin_conejo', 'Conejo', 300),
@@ -46,7 +46,7 @@ INSERT INTO skin_tienda (id, imagen_url, nombre, precio) VALUES
 (21, 'skin_heisenberg', 'Walter White', 6000);
 
 -- Logros
-INSERT INTO logro (nombre, descripcion, requisito, experienciaxdesbloquear, tipo) VALUES
+INSERT IGNORE INTO logro (nombre, descripcion, requisito, experienciaxdesbloquear, tipo) VALUES
 ('Primer paso', 'Completa 1 hábito en un día', 1, 20, 'HABITO'),
 ('En racha', 'Completa 3 hábitos en un día', 3, 50, 'HABITO'),
 ('Día perfecto', 'Completa todos tus hábitos en un día', 5, 100, 'HABITO'),

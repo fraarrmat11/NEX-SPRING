@@ -42,6 +42,7 @@ public class DiarioService {
         return toDto(repo.findById(id).orElseThrow());
     }
 
+    //encuentra el diario del usuario por su id para mostrarlo en la aplicación
     public List<DiarioDto> getByUsuario(Integer usuarioId) {
         return repo.findAll().stream()
                 .filter(d -> d.getUsuario() != null && d.getUsuario().getId().equals(usuarioId))
@@ -49,6 +50,7 @@ public class DiarioService {
                 .toList();
     }
 
+    //crea un diario a partir de datos simplificados y le asigna el usuario del request
     public DiarioDto create(DiarioRequest request) {
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId()).orElseThrow();
         Diario diario = new Diario(usuario, request.getFecha(), request.getContenido());
@@ -57,6 +59,7 @@ public class DiarioService {
         return resultado;
     }
 
+    //encuentra un diario por id y le actualiza el contenido según el request
     public DiarioDto update(Integer id, DiarioRequest request) {
         Diario diario = repo.findById(id).orElseThrow();
         diario.setFecha(request.getFecha());
