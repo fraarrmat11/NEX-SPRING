@@ -56,4 +56,4 @@ INSERT IGNORE INTO logro (nombre, descripcion, requisito, experienciaxdesbloquea
 ('Primera sesión', 'Completa una sesión de concentración', 1, 30, 'FOCUS'),
 ('Concentración total', 'Completa una sesión de 1 hora', 60, 100, 'FOCUS'),
 ('Primera página', 'Escribe tu primera entrada en el diario', 1, 20, 'DIARIO'),
-('Escritor constante', 'Escribe 7 entradas en el diario', 7, 150, 'DIARIO');
+('Escritor constante', 'Escribe 7 entradas çen el diario', 7, 150, 'DIARIO');

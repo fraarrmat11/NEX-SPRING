@@ -18,6 +18,7 @@ public class Usuario {
     private Integer id;
 
     private String nombre;
+    private String contrasena;
     private Integer experienciaActual;
     private Integer monedas;
 
@@ -33,8 +34,9 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
     private List<UsuarioLogro> logrosDesbloqueados = new ArrayList<>();
 
-    public Usuario(String nombre) {
+    public Usuario(String nombre, String contrasena) {
         this.nombre = nombre;
+        this.contrasena = contrasena;
         this.experienciaActual = 0;
         this.monedas = 0;
     }

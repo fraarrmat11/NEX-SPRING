@@ -7,6 +7,7 @@ import com.example.nexspringboot.model.Usuario;
 import com.example.nexspringboot.repository.NivelRepository;
 import com.example.nexspringboot.repository.UsuarioRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,11 +21,13 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final NivelRepository nivelRepository;
     private final LogroService logroService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, NivelRepository nivelRepository, LogroService logroService) {
+    public UsuarioService(UsuarioRepository usuarioRepository, NivelRepository nivelRepository, LogroService logroService, BCryptPasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.nivelRepository = nivelRepository;
         this.logroService = logroService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private NivelDto toNivelDto(Nivel n) {
@@ -97,18 +100,24 @@ public class UsuarioService {
         });
     }
 
-    public UsuarioDto buscarOCrearPorNombre(String nombre) {
-        Optional<Usuario> existente = usuarioRepository.findByNombre(nombre);
-        if (existente.isPresent()) {
-            return toDto(existente.get());
+    public UsuarioDto registrar(String nombre, String contrasena) {
+        // Comprobar que el nombre no existe ya
+        if (usuarioRepository.findByNombre(nombre).isPresent()) {
+            return null; // nombre ya en uso
         }
-        // Si no existe, lo creamos
-        Usuario nuevo = new Usuario(nombre);
+        Usuario nuevo = new Usuario(nombre, passwordEncoder.encode(contrasena));
         Nivel nivel1 = nivelRepository.findById(1).orElse(null);
         nuevo.setNivel(nivel1);
         nuevo.setExperienciaActual(0);
         nuevo.setMonedas(0);
         return toDto(usuarioRepository.save(nuevo));
+    }
+
+    public UsuarioDto login(String nombre, String contrasena) {
+        return usuarioRepository.findByNombre(nombre)
+                .filter(u -> passwordEncoder.matches(contrasena, u.getContrasena()))
+                .map(this::toDto)
+                .orElse(null); // null = credenciales incorrectas
     }
 
     public void completarFocus(Integer usuarioId, int minutos) {

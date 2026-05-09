@@ -1,8 +1,10 @@
 package com.example.nexspringboot.controller;
 
+import com.example.nexspringboot.dto.LoginRequest;
 import com.example.nexspringboot.dto.UsuarioDto;
 import com.example.nexspringboot.model.Usuario;
 import com.example.nexspringboot.service.UsuarioService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +22,20 @@ public class UsuarioController {
     @GetMapping
     public List<UsuarioDto> getAll() { return usuarioService.getAll(); }
 
-    @GetMapping("/buscar")
-    public UsuarioDto buscarOCrearPorNombre(@RequestParam String nombre) {
-        return usuarioService.buscarOCrearPorNombre(nombre);
+    @PostMapping("/login")
+    public ResponseEntity<UsuarioDto> login(@RequestBody LoginRequest loginRequest){
+        UsuarioDto dto = usuarioService.login(loginRequest.getNombre(), loginRequest.getContrasena());
+        if(dto == null)
+            return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/registrar")
+    public ResponseEntity<UsuarioDto> registrar(@RequestBody LoginRequest loginRequest){
+        UsuarioDto dto = usuarioService.registrar(loginRequest.getNombre(), loginRequest.getContrasena());
+        if (dto == null)
+            return ResponseEntity.status(409).build();//nombre ya en uso
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/{id}")
