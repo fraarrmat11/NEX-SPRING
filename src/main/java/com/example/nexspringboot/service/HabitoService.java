@@ -119,13 +119,11 @@ public class HabitoService {
             if (estabaCompleto) {
                 Usuario u = h.getUsuario();
                 u.setExperienciaActual(u.getExperienciaActual() - h.getExperienciaXCompletar());
-                //si el usuario tiene experiencia negativa y es mayor de nivel 1
-                if (u.getExperienciaActual() < 0 && u.getNivel().getId() > 1) {
-                    //coge el nivel anterior del usuario y se lo asigna
+                //si la XP cae por debajo del umbral del nivel actual y no está en nivel 1, baja de nivel
+                if (u.getExperienciaActual() < u.getNivel().getExperienciaNecesaria() && u.getNivel().getId() > 1) {
                     Nivel nivelAnterior = nivelRepository.findById(u.getNivel().getId() - 1).orElse(null);
                     if (nivelAnterior != null) {
                         u.setNivel(nivelAnterior);
-                        u.setExperienciaActual(nivelAnterior.getExperienciaNecesaria() + u.getExperienciaActual());
                     }
                 }
             }
